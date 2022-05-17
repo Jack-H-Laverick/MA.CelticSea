@@ -1,0 +1,100 @@
+---
+title: "Choosing StrathE2E domain extent - Celtic Sea"
+author: "Jack H Laverick, University of Strathclyde"
+date: "`r format(Sys.time(), '%A %d %b')`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, warning = FALSE, message = FALSE, fig.align = "center")
+
+Tidy_packages <- c("tidyverse", "data.table", "pbapply", "furrr", "viridis", "patchwork") # List handy data packages
+Geo_packages <- c("sf", "rnaturalearth",  "raster", "stars")                # List GIS packages
+lapply(c(Tidy_packages, Geo_packages), library, character.only = TRUE)      # Load packages
+source("./R scripts/@_Region file.R")                                       # Define project region 
+
+plan(multisession)                                                          # Choose the method to parallelise by
+
+domain <- readRDS("./Objects/Domains.rds")
+
+world <- ne_countries(scale = "medium", returnclass = "sf") %>%             # Get a world map
+  st_transform(crs = crs)                                                   # Assign polar projection
+
+
+```
+
+StrathE2E contains 3 ocean volumes. There's an inshore-offshore divide, and a shallow-deep divide. Only the offshore volume is split into shallow and deep. Choosing a shallow-deep boundary depth has knock-on consequences for the inshore-offshore divide, as the inshore zone will be defined as the sea surface to this depth. StrathE2E assumes that the volumes are well mixed, and any exchange between the deep and shallow compartments are controlled by vertical diffusivity at that depth. The boundary depth therefore needs to be deep enough to avoid excessive mixing between the volumes, while also considering how large the inshore zone will end up being. The spatial arrangement of StratheE2E is shown below.
+
+![](../Shared data/spatial schematic.svg)
+
+
+```{r domain, eval = T}
+
+colours <- c(Inshore = "yellow", Offshore = "yellow3")
+
+GEBCO <- read_stars("../Shared data/GEBCO_2020.nc", proxy = TRUE)
+st_crs(GEBCO) <- 4326
+
+#sf_use_s2(F)
+
+crop <- st_bbox(st_transform(st_buffer(domain, 250000), 4326))
+
+GEBCO <- GEBCO[crop] %>%
+  st_transform(crs) %>% 
+  st_as_stars(downsample = 10)
+
+land <- units::set_units(0, "m")
+
+GEBCO[[1]][GEBCO[[1]] >= land] <- NA
+
+ggplot() +
+  geom_stars(data = GEBCO) +
+  viridis::scale_fill_viridis(name = "Elevation", option = "turbo") +
+  ggnewscale::new_scale_fill() +
+  geom_sf(data = domain, aes(fill = Shore), colour = "black", size = 0.1) +
+  geom_sf(data = world, size = 0.1, fill = "black") +
+  scale_fill_manual(values = colours, name = "Zone") +
+  coord_sf(xlim = st_bbox(domain)[c(1,3)], ylim = st_bbox(domain)[c(2,4)]) + # Specify the plotting window for SF maps in this region
+theme_minimal() +
+  labs(caption = "Suggested model area") +
+  NULL
+```
+
+The polygons for the inshore and offshore zones are shown in yellows. The bathymetry is plotted underneath in a rainbow palette, so you can see how the shelf extends beyond where we cut the domain.
+
+To check how the proposed model domain relates to fishing activity, we plotted the cumulative fishing effort according to global fishing watch from 2017 - 2020:
+
+``` {r fishing, eval = T}
+
+GFW <- readRDS("./Notes/Cache/domain_GFW.rds") %>% 
+  st_transform(crs = crs)
+
+ggplot() +
+  geom_sf(data = world, size = 0.1, fill = "grey30", colour = "white", size = 0.1) +
+  geom_sf(data = domain, fill = "grey", colour = "black", size = 0.1) +
+  geom_stars(data = GFW, colour = NA) +
+  geom_sf(data = domain, fill = NA, colour = "white", size = 0.2) +
+  viridis::scale_fill_viridis(na.value = NA, trans = "log10", option = "inferno") +
+  coord_sf(xlim = st_bbox(domain)[c(1,3)], ylim = st_bbox(domain)[c(2,4)]) + # Specify the plotting window for SF maps in this region
+  theme_minimal() +
+  labs(caption = "Total fishing effort") +
+  NULL
+
+```
+
+The model domain is shown in grey with white borders, while the fishing effort is shown as a heatmap on a log scale. They grey area appears to capture the majority of the fishing effort within the EEZ.
+
+
+``` {r Deep convection cached, eval = F}
+
+b <- readRDS("./Notes/Cache/domain_V_b.rds")
+
+b
+```
+
+``` {r Vertical diffusivity cached, eval = F}
+
+c <- readRDS("./Notes/Cache/domain_V_c.rds")
+
+c
+```
