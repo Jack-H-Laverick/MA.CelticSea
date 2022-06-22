@@ -7,4 +7,4 @@ rm(list=ls())                                                               # Wi
 
 library(StrathE2E2)
 
-R.utils::copyDirectory("./Data/Celtic_Sea_ERSEM/", "./StrathE2E/Celtic_Sea_NM/") # Copy example model
+R.utils::copyDirectory("./Data/Celtic_Sea_ERSEM_4/", "./StrathE2E/Celtic_Sea_NM/") # Copy example model
