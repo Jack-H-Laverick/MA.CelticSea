@@ -16,7 +16,7 @@ new <- read.csv("./StrathE2E/Celtic_Sea_NM/2003-2013/Driving/chemistry_CELTIC_SE
   pivot_longer(!Month, names_to = "Var", values_to = "Value") %>% 
   mutate(Model = "MEDUSA")
 
-comparison <- read.csv("./Data/Celtic_Sea_ERSEM/2003-2013/Driving/chemistry_CELTIC_SEA_2003-2013.csv") %>% 
+comparison <- read.csv("./Data/Celtic_Sea_ERSEM_4/2003-2013/Driving/chemistry_CELTIC_SEA_2003-2013.csv") %>% 
   select(SO_nitrate, SO_ammonia = SO_ammona, SO_phyt, SO_detritus, D_nitrate = D_intrate, D_ammonia, 
          D_phyt, D_detritus, SI_nitrate, SI_ammonia, SI_phyt, SI_detritus) %>% 
   mutate(Month = 1:12) %>% 
@@ -39,7 +39,7 @@ new <- read.csv("./StrathE2E/Celtic_Sea_NM/2003-2013/Driving/physics_CELTIC_SEA_
   pivot_longer(!Month, names_to = "Var", values_to = "Value") %>% 
   mutate(Model = "MEDUSA")
 
-comparison <- read.csv("./Data/Celtic_Sea_ERSEM/2003-2013/Driving/physics_CELTIC_SEA_2003-2013.csv") %>% 
+comparison <- read.csv("./Data/Celtic_Sea_ERSEM_4/2003-2013/Driving/physics_CELTIC_SEA_2003-2013.csv") %>% 
   select(SO_OceanIN, D_OceanIN, SI_OceanIN, SI_OceanOUT, SO_SI_flow, SO_temp, D_temp, SI_temp, log10Kvert) %>% 
   mutate(Month = 1:12) %>% 
   pivot_longer(!Month, names_to = "Var", values_to = "Value") %>% 
