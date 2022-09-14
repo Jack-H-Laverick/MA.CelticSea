@@ -1,0 +1,54 @@
+
+# Extract monthly significant wave height
+
+#### Setup ####
+
+rm(list=ls())
+
+Packages <- c("MiMeMo.tools", "exactextractr", "raster", "lubridate")       # List packages
+lapply(Packages, library, character.only = TRUE)                            # Load packages
+source("./R scripts/@_Region file.R")
+
+domains <- readRDS("./Objects/Domains.rds") %>%                             # Import inshore polygon
+  st_transform(crs = 4326)
+
+Reduced <- brick("../Shared data/ISIMIP Atmosphere/ndep-nhx_histsoc_monthly_1901_2021.nc") # import reduced nitrogen deposition
+
+Oxidised <- brick("../Shared data/ISIMIP Atmosphere/ndep-noy_histsoc_monthly_1901_2021.nc")# import oxidised nitrogen deposition
+  
+#### Calculate mean disturbance per habitat area, weighting by cell coverage ####
+
+Deposition <- map(list(Reduced, Oxidised), ~{
+  
+exact_extract(.x, domains, "mean") %>%                                      # Extract deposition    
+  mutate(Shore = domains$Shore) %>%                                         # Add metadata
+  pivot_longer(-Shore, names_to = "Date", values_to = "Measured")           # Move time steps into a single column
+  
+}) %>%
+  map2_dfr(c("R", "O"), ~{ mutate(.x, Oxidation_state = .y)}) %>%           # Add label for each variable
+  mutate(Date = str_remove(Date, "mean.X")) %>%                             # Fix date string
+  mutate(Date = ymd("1901-01-01") %m+% months(as.numeric(Date) - 612)) %>%  # Format as date
+  mutate(Month = month(Date), 
+         Year = year(Date),
+         Measured = full_to_milli((Measured/14)/days_in_month(Date)))       # Convert to daily rate, and from grams to mmol
+
+#### Plot ####
+
+Deposition_lab <- mutate(Deposition, Oxidation_state = factor(Oxidation_state, levels = c("O", "R"),
+                                                          labels = c(expression("Oxidised Nitrogen (NO"["y"]*")"), expression("Reduced Nitrogen (NH"["x"]*")"))))
+
+ggplot(data = filter(Deposition_lab, Date > 2000)) + 
+  geom_line(aes(x = Date, y = Measured, colour = Shore), size = 0.15) +
+  theme_minimal() +
+  facet_grid(rows = vars(Oxidation_state), scales = "free_y", labeller = label_parsed) +
+  labs(y = expression("mmols N m"^{-2}*"Day"^{-1}), caption = "ISIMIP Atmospheric Nitrogen deposition") +
+  theme(legend.position = "top") +
+  NULL
+
+ggsave("./Figures/saltless/Atmospheric N Deposition.png", last_plot(), dpi = 500, width = 18, height = 10 , units = "cm")
+
+#### Save ####
+
+Deposition %>% 
+  dplyr::select(Measured, Month, Oxidation_state, Shore,  Year) %>%  
+  saveRDS("./Objects/Atmospheric N deposition.rds")
