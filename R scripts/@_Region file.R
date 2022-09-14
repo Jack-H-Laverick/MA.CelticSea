@@ -81,17 +81,18 @@ rm(Inshore_Ocean1, Inshore_Ocean2, Inshore_Ocean3, Inshore_Ocean4)
 
 #### expand polygon for sampling rivers ####
 
-river_expansion <- matrix(c(13, 73,
-                            0, 80,
-                            0, 85,
-                            63, 85,
-                            73, 77,
-                            30, 71,
-                            13, 73),
+river_expansion <- matrix(c(-9.5, 55.2,
+                            -12, 55.5,
+                            -14, 54,
+                            -14, 47.8,
+                            -4.7, 47.8,
+                            -4.7, 49,
+                            -10.5, 52,
+                            -9.5, 55.2),
                           ncol = 2, byrow = T) %>% 
   list() %>% 
   st_polygon() %>% 
   st_sfc() %>% 
   st_sf(Region = "Celtic Sea",.)
 st_crs(river_expansion) <- st_crs(4326)                                          
-river_expansion <- st_transform(river_expansion, crs = 3035)
+river_expansion <- st_transform(river_expansion, crs = crs)
