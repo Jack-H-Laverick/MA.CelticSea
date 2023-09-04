@@ -1,6 +1,6 @@
 
 ## Set repeated commands specific to the project region
-## This version is parameterised for the Barents sea
+implementation <- "Celtic_Sea_NM"
 
 library(sf)
 
