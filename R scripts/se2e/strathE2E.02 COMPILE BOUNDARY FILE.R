@@ -7,12 +7,12 @@ rm(list=ls())                                                               # Wi
 
 library(MiMeMo.tools)
 
-Boundary_template <- read.csv("./StrathE2E/Celtic_Sea_NM/2003-2013/Driving/chemistry_CELTIC_SEA_2003-2013.csv")  # Read in example boundary drivers
+Boundary_template <- read.csv("./StrathE2E/Celtic_Sea_NM/2010-2019/Driving/chemistry_CELTIC_SEA_2003-2013.csv")  # Read in example boundary drivers
 
 #### Last minute data manipulation ####
 
 My_boundary_data<- readRDS("./Objects/Boundary measurements.rds") %>%                        # Import data
-  filter(between(Year, 2003, 2013)) %>%                                                      # Limit to reference period
+  filter(between(Year, 2010, 2019)) %>%                                                      # Limit to reference period
   group_by(Month, Compartment, Variable) %>%                                                 # Average across years
   summarise(Measured = mean(Measured, na.rm = T)) %>% 
   ungroup() %>% 
@@ -24,7 +24,7 @@ My_boundary_data<- readRDS("./Objects/Boundary measurements.rds") %>%           
 My_DIN_fix <- readRDS("./Objects/Ammonia to DIN.rds")
 
 My_atmosphere <- readRDS("./Objects/Atmospheric N deposition.rds") %>% 
-  filter(between(Year, 2003, 2013)) %>%                                                      # Limit to reference period
+  filter(between(Year, 2010, 2019)) %>%                                                      # Limit to reference period
   group_by(Month, Oxidation_state, Shore,  Year) %>%
   summarise(Measured = sum(Measured, na.rm = T)) %>%                                         # Sum across deposition states 
   summarise(Measured = mean(Measured, na.rm = T)) %>%                                        # Average over years
@@ -34,8 +34,8 @@ My_atmosphere <- readRDS("./Objects/Atmospheric N deposition.rds") %>%
 
 #### Create new file ####
 
-Boundary_new <- mutate(Boundary_template, 
-                       SO_nitrate = My_boundary_data$SO_DIN * (1-filter(My_DIN_fix, Depth_layer == "Shallow")$Proportion), # Multiply DIN by the proportion of total DIN as nitrate
+Boundary_new <- rename(Boundary_template, SO_ammonia = SO_ammona, D_nitrate = D_intrate) %>% # Fix Mike's typos
+                mutate(SO_nitrate = My_boundary_data$SO_DIN * (1-filter(My_DIN_fix, Depth_layer == "Shallow")$Proportion), # Multiply DIN by the proportion of total DIN as nitrate
                        SO_ammonia = My_boundary_data$SO_DIN * filter(My_DIN_fix, Depth_layer == "Shallow")$Proportion, # Multiply DIN by the proportion of total DIN as ammonium
                        SO_phyt = My_boundary_data$SO_Phytoplankton,
                        SO_detritus = My_boundary_data$SO_Detritus,
@@ -66,7 +66,6 @@ Boundary_new <- mutate(Boundary_template,
                        # DO_ammonia	= My_overhang$DIN *
                        #   (Boundary_template$D_ammonia/(Boundary_template$D_intrate + Boundary_template$D_ammonia)),
                        # DO_detritus = My_overhang$Detritus
-) %>% 
-  select(-c(SO_ammona, D_intrate))                                          # Fix Mike's typos
+) 
 
-write.csv(Boundary_new, file = "./StrathE2E/Celtic_Sea_NM/2003-2013/Driving/chemistry_CELTIC_SEA_2003-2013.csv", row.names = F)
+write.csv(Boundary_new, file = "./StrathE2E/Celtic_Sea_NM/2003-2013/Driving/chemistry_CELTIC_SEA_2010-2019.csv", row.names = F)

@@ -7,9 +7,9 @@ rm(list=ls())                                                               # Wi
 
 library(MiMeMo.tools)
 
-Physics_template <- read.csv("./StrathE2E/Celtic_Sea_NM/2003-2013/Driving/physics_CELTIC_SEA_2003-2013.csv") # Read in example Physical drivers
+Physics_template <- read.csv("./StrathE2E/Celtic_Sea_NM/2010-2019/Driving/physics_CELTIC_SEA_2003-2013.csv") # Read in example Physical drivers
 
-Depths <- read.csv("./StrathE2E/Celtic_Sea_NM/2003-2013/Param/physical_parameters_CELTIC_SEA.csv", nrows = 3)# Import Mike's original depths for scaling.
+Depths <- read.csv("./StrathE2E/Celtic_Sea_NM/2010-2019/Param/physical_parameters_CELTIC_SEA.csv", nrows = 3)# Import Mike's original depths for scaling.
 
 #### Last minute data manipulation ####
 
@@ -24,14 +24,14 @@ My_scale <- readRDS("./Objects/Domains.rds") %>%                            # Ca
   dplyr::select(Shore, slab_layer, Volume)
 
 My_light <- readRDS("./Objects/Air temp and light.rds") %>% 
-  filter(between(Year, 2003, 2013), grepl("Light", Type)) %>%               # Limit to reference period and variable
+  filter(between(Year, 2010, 2019), grepl("Light", Type)) %>%               # Limit to reference period and variable
   group_by(Month) %>%                                                       # Average across months
   summarise(Measured = mean(Measured, na.rm = T)) %>% 
   ungroup() %>% 
   arrange(Month)                                                            # Order to match template
 
 My_H_Flows <- readRDS("./Objects/H-Flows.rds") %>% 
-  filter(between(Year, 2003, 2013)) %>%                                     # Limit to reference period
+  filter(between(Year, 2010, 2019)) %>%                                     # Limit to reference period
   group_by(across(-c(Year, Flow))) %>%                                      # Group over everything except year and variable of interest
   summarise(Flow = mean(Flow, na.rm = T)) %>%                               # Average flows by month over years
   ungroup() %>% 
@@ -41,7 +41,7 @@ My_H_Flows <- readRDS("./Objects/H-Flows.rds") %>%
   arrange(Month)                                                            # Order by month to match template
 
 My_V_Diff <- readRDS("./Objects/vertical diffusivity.rds") %>%
-  filter(between(Year, 2003, 2013)) %>%                                     # Limit to reference period
+  filter(between(Year, 2010, 2019)) %>%                                     # Limit to reference period
   group_by(Month) %>% 
   summarise(V_diff = mean(Vertical_diffusivity, na.rm = T)) %>% 
   ungroup() %>% 
@@ -53,14 +53,14 @@ My_V_Diff <- readRDS("./Objects/vertical diffusivity.rds") %>%
   arrange(Month)                                                            # Order by month to match template
   
 My_volumes <- readRDS("./Objects/TS.rds") %>% 
-  filter(between(Year, 2003, 2013)) %>%                                     # Limit to reference period
+  filter(between(Year, 2010, 2019)) %>%                                     # Limit to reference period
   group_by(Compartment, Month) %>%                                          # By compartment and month
   summarise(across(Salinity_avg:Ice_conc_avg, mean, na.rm = T)) %>%         # Average across years for multiple columns
   ungroup() %>% 
   arrange(Month)                                                            # Order by month to match template
 
 My_Rivers <- readRDS("./Objects/River volume input.rds") %>% 
-  filter(between(Year, 2003, 2013)) %>%                                     # Limit to reference period
+  filter(between(Year, 2010, 2019)) %>%                                     # Limit to reference period
   group_by(Month) %>% 
   summarise(Runoff = mean(Runoff, na.rm = T)) %>%                           # Average by month across years
   ungroup() %>% 
@@ -104,4 +104,4 @@ Physics_new <- mutate(Physics_template, SLight = My_light$Measured,
                       # D_DO_downwelling = filter(My_overhang_velocity, Direction == "Downwelling")$Flow
 ) 
                      
-write.csv(Physics_new, file = "./StrathE2E/Celtic_Sea_NM/2003-2013/Driving/physics_CELTIC_SEA_2003-2013.csv", row.names = F)
+write.csv(Physics_new, file = "./StrathE2E/Celtic_Sea_NM/2010-2019/Driving/physics_CELTIC_SEA_2010-2019.csv", row.names = F)
