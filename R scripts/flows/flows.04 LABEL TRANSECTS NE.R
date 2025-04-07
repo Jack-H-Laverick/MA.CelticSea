@@ -65,14 +65,14 @@ ggplot(labelled) +                                                              
 ggsave("./Figures/flows/check.04.2.png")
 
 shallow <- mutate(labelled,
-                  thickness = ifelse(Bathymetry > 400, 340, Bathymetry-60),
+                  thickness = ifelse(Bathymetry >= SDepth, SDepth, Bathymetry),
                   weights = thickness*split_length) %>% 
   st_drop_geometry() %>% 
   select(-c(thickness, Bathymetry, split_length))
 
 deep <- mutate(labelled, 
                slab_layer = "D",
-               thickness = ifelse(Bathymetry > 400, 340, Bathymetry-60),
+               thickness = ifelse(Bathymetry > DDepth, (DDepth-SDepth), (Bathymetry-SDepth)),
                weights = thickness*split_length) %>% 
   st_drop_geometry() %>% 
   select(-c(thickness, Bathymetry, split_length))
