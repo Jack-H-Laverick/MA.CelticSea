@@ -6,17 +6,19 @@
 rm(list=ls())                                                               # Wipe the brain
 
 library(MiMeMo.tools)
+source("./R scripts/@_Region file.R")
 
-Physics_template <- read.csv("./StrathE2E/Celtic_Sea_NM/2010-2019/Driving/physics_CELTIC_SEA_2003-2013.csv") # Read in example Physical drivers
+Physics_template <- read.csv(stringr::str_glue("./StrathE2E/Models/{implementation}/2010-2019/Driving/physics_CELTIC_SEA_2003-2013.csv"))  # Read in example Physical drivers
 
-Depths <- read.csv("./StrathE2E/Celtic_Sea_NM/2010-2019/Param/physical_parameters_CELTIC_SEA.csv", nrows = 3)# Import Mike's original depths for scaling.
+Depths <- read.csv(stringr::str_glue("./StrathE2E/Models/{implementation}/2010-2019/Param/physical_parameters_CELTIC_SEA.csv"), nrows = 3) # Import Mike's original depths for scaling.
 
 #### Last minute data manipulation ####
 
 My_scale <- readRDS("./Objects/Domains.rds") %>%                            # Calculate the volume of the three zones
   sf::st_drop_geometry() %>% 
-  mutate(S = c(T, T),
-         D = c(F, T)) %>% 
+  mutate(S = T,
+         D = case_when(Shore == "Inshore" ~ F,
+                       Shore == "Offshore" ~ T)) %>% 
   gather(key = "slab_layer", value = "Exists", S, D) %>% 
   filter(Exists == T) %>%
   mutate(Elevation = c(Depths[3,1], Depths[1,1], Depths[2,1])) %>%          # Pulls Mike's original depths instead of GEBCO 
@@ -45,11 +47,11 @@ My_V_Diff <- readRDS("./Objects/vertical diffusivity.rds") %>%
   group_by(Month) %>% 
   summarise(V_diff = mean(Vertical_diffusivity, na.rm = T)) %>% 
   ungroup() %>% 
-  bind_rows(data.frame(Month = c(12,1,2), V_diff = NA)) %>%                 # Replace months with no data (introduces -Infs) 
-  arrange(Month) %>%                                                        # Order by month to allow interpolation
-  rbind(., .) %>%                                                           # Need to repeat the data as the points to interpolate are at the end of the cycle
-  mutate(V_diff = zoo::na.spline(V_diff, na.rm = FALSE)) %>%                # Interpolate by cubic spline
-  slice(12:23) %>%                                                          # Retrieve the completed cycle
+  # bind_rows(data.frame(Month = c(12,1,2), V_diff = NA)) %>%                 # Replace months with no data (introduces -Infs) 
+  # arrange(Month) %>%                                                        # Order by month to allow interpolation
+  # rbind(., .) %>%                                                           # Need to repeat the data as the points to interpolate are at the end of the cycle
+  # mutate(V_diff = zoo::na.spline(V_diff, na.rm = FALSE)) %>%                # Interpolate by cubic spline
+  # slice(12:23) %>%                                                          # Retrieve the completed cycle
   arrange(Month)                                                            # Order by month to match template
   
 My_volumes <- readRDS("./Objects/TS.rds") %>% 
@@ -104,4 +106,6 @@ Physics_new <- mutate(Physics_template, SLight = My_light$Measured,
                       # D_DO_downwelling = filter(My_overhang_velocity, Direction == "Downwelling")$Flow
 ) 
                      
-write.csv(Physics_new, file = "./StrathE2E/Celtic_Sea_NM/2010-2019/Driving/physics_CELTIC_SEA_2010-2019.csv", row.names = F)
+write.csv(Physics_new, 
+          file = stringr::str_glue("./StrathE2E/Models/{implementation}/2010-2019/Driving/physics_{toupper(implementation)}_2010-2019.csv"),
+          row.names = F)

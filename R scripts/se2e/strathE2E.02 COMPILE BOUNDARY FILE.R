@@ -6,8 +6,9 @@
 rm(list=ls())                                                               # Wipe the brain
 
 library(MiMeMo.tools)
+source("./R scripts/@_Region file.R")
 
-Boundary_template <- read.csv("./StrathE2E/Celtic_Sea_NM/2010-2019/Driving/chemistry_CELTIC_SEA_2003-2013.csv")  # Read in example boundary drivers
+Boundary_template <- read.csv(stringr::str_glue("./StrathE2E/Models/{implementation}/2010-2019/Driving/chemistry_CELTIC_SEA_2003-2013.csv"))  # Read in example boundary drivers
 
 #### Last minute data manipulation ####
 
@@ -68,4 +69,4 @@ Boundary_new <- rename(Boundary_template, SO_ammonia = SO_ammona, D_nitrate = D_
                        # DO_detritus = My_overhang$Detritus
 ) 
 
-write.csv(Boundary_new, file = "./StrathE2E/Celtic_Sea_NM/2003-2013/Driving/chemistry_CELTIC_SEA_2010-2019.csv", row.names = F)
+write.csv(Boundary_new, file = stringr::str_glue("./StrathE2E/Models/{implementation}/2010-2019/Driving/chemistry_{toupper(implementation)}_2010-2019.csv"), row.names = F)
